@@ -1,6 +1,6 @@
 Name:		fermilab-conf_ca-certs
 Version:	2019.01
-Release:	2
+Release:	3
 Summary:	List of Fermilab Certificate Authorities
 
 Group:		Fermilab
@@ -16,12 +16,21 @@ BuildArch:	noarch
 BuildRequires:	bash coreutils findutils openssl
 Requires:	ca-certificates >= 2018.1
 
-Requires(post): /bin/bash coreutils ca-certificates
-Requires(postun): /bin/bash coreutils ca-certificates
-
 %description
 Authentication Services operates a non-accredited CA that is
 integrated with the FERMI and SERVICES domains.
+
+%package trust
+Summary:        Trust the List of Fermilab Certificate Authorities
+
+Requires(post): /bin/bash coreutils ca-certificates
+Requires(postun): /bin/bash coreutils ca-certificates
+
+%description trust
+Authentication Services operates a non-accredited CA that is
+integrated with the FERMI and SERVICES domains.
+
+These will be added to your CA trust store.
 
 %prep
 %setup -q -n %{name}
@@ -33,23 +42,32 @@ integrated with the FERMI and SERVICES domains.
 %install
 %{__rm} -rf %{buildroot}
 %{__mkdir_p} %{buildroot}%{_datadir}/pki/ca-trust-source/anchors/
-%{__mv} *.pem %{buildroot}%{_datadir}/pki/ca-trust-source/anchors/
+%{__cp} *.pem %{buildroot}%{_datadir}/pki/ca-trust-source/anchors/
+
+%{__mkdir_p} %{buildroot}%{_datadir}/fermilab-conf_ca-certs/
+%{__cp} *.pem %{buildroot}%{_datadir}/fermilab-conf_ca-certs/
 
 
 %files
+%attr(0644,root,root) %{_datadir}/fermilab-conf_ca-certs/*
+
+%files trust
 %attr(0644,root,root) %{_datadir}/pki/ca-trust-source/anchors/*
 
 
-%post -p /bin/bash
+%post trust -p /bin/bash
 update-ca-trust >/dev/null
 exit 0
 
 
-%postun -p /bin/bash
+%postun trust -p /bin/bash
 update-ca-trust >/dev/null
 exit 0
 
 
 %changelog
+* Mon Feb 12 2024 Pat Riehecky <riehecky@fnal.gov> 2019.01-3
+- Seperate trust from just local deployment
+
 * Fri Jan 11 2019 Olga Terlyga <terlyga@fnal.gov> 2019.01-2
 - Initial Build
